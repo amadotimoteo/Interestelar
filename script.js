@@ -96,7 +96,7 @@ function setupEventListeners() {
 function createTextPoints(text) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const fontSize = 140;
+    const fontSize = window.innerWidth < 768 ? 80 : 140;
     const padding = 40;
 
     ctx.font = `bold ${fontSize}px Inter`;
@@ -243,3 +243,4 @@ window.addEventListener('resize', () => {
 });
 
 init();
+
