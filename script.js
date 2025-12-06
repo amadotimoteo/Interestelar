@@ -4,13 +4,30 @@ let currentState = 'sphere';
 
 function init() {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    // 📱 DETECÇÃO AUTOMÁTICA DE DISPOSITIVO
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const small = window.innerWidth < 600;
+
+    const autoFOV = (isMobile || isTouch || small) ? 58 : 75;
+    const autoZ = (isMobile || isTouch || small) ? 32 : 25;
+
+    // 📌 CÂMERA RESPONSIVA
+    camera = new THREE.PerspectiveCamera(
+        autoFOV,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+    camera.position.z = autoZ;
+
+    // 📌 RENDERER RESPONSIVO
     renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000);
     document.getElementById('container').appendChild(renderer.domElement);
-
-    camera.position.z = 25;
 
     createParticles();
     setupEventListeners();
@@ -52,7 +69,6 @@ function createParticles() {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // 🔥 Partículas menores e elegantes
     const material = new THREE.PointsMaterial({
         size: 0.06,
         vertexColors: true,
@@ -125,24 +141,20 @@ function morphToText(text) {
     const textPoints = createTextPoints(text);
 
     const positions = particles.geometry.attributes.position.array;
-    const colors = particles.geometry.attributes.color.array;
     const target = new Float32Array(count * 3);
 
-    // 🔥 PARA A ROTAÇÃO (centraliza o texto)
     gsap.to(particles.rotation, {
         x: 0, y: 0, z: 0,
         duration: 1.2,
         ease: "power3.out"
     });
 
-    // 🔥 Texto centralizado e suave
     for (let i = 0; i < count; i++) {
         if (i < textPoints.length) {
             target[i * 3] = textPoints[i].x;
             target[i * 3 + 1] = textPoints[i].y;
             target[i * 3 + 2] = 0;
         } else {
-            // fundo de partículas vivas, não parado
             const a = Math.random() * Math.PI * 2;
             const r = 15 + Math.random() * 10;
             target[i * 3] = Math.cos(a) * r;
@@ -151,7 +163,6 @@ function morphToText(text) {
         }
     }
 
-    // 🔥 Movimento cinematográfico
     for (let i = 0; i < positions.length; i += 3) {
         gsap.to(positions, {
             [i]: target[i],
@@ -163,12 +174,10 @@ function morphToText(text) {
         });
     }
 
-    // 🔥 Fica respirando no texto por 7 segundos
     setTimeout(() => morphToCinematicReturn(), 7000);
 }
 
 function morphToCinematicReturn() {
-    // 🔥 dissolve antes de voltar
     gsap.to(particles.material, {
         opacity: 0.2,
         duration: 1.5,
@@ -186,7 +195,6 @@ function morphToSphere() {
     });
 
     const positions = particles.geometry.attributes.position.array;
-    const colors = particles.geometry.attributes.color.array;
     const target = new Float32Array(count * 3);
 
     function sphericalDistribution(i) {
@@ -207,7 +215,6 @@ function morphToSphere() {
         target[i * 3 + 2] = p.z;
     }
 
-    // 🔥 volta cinematográfica
     for (let i = 0; i < positions.length; i += 3) {
         gsap.to(positions, {
             [i]: target[i],
@@ -223,7 +230,6 @@ function morphToSphere() {
 function animate() {
     requestAnimationFrame(animate);
 
-    // 🔥 esfera sempre viva
     if (currentState === 'sphere') {
         particles.rotation.y += 0.002;
         particles.rotation.x += 0.0008;
@@ -233,10 +239,14 @@ function animate() {
 }
 
 window.addEventListener('resize', () => {
+
+    const small = window.innerWidth < 600;
+
     camera.aspect = window.innerWidth / window.innerHeight;
+    camera.position.z = small ? 32 : 25;
     camera.updateProjectionMatrix();
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 init();
-
