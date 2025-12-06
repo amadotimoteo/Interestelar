@@ -4,30 +4,24 @@ let currentState = 'sphere';
 
 function init() {
     scene = new THREE.Scene();
-
-    // 📱 DETECÇÃO AUTOMÁTICA DE DISPOSITIVO
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
-    const small = window.innerWidth < 600;
-
-    const autoFOV = (isMobile || isTouch || small) ? 58 : 75;
-    const autoZ = (isMobile || isTouch || small) ? 32 : 25;
-
-    // 📌 CÂMERA RESPONSIVA
-    camera = new THREE.PerspectiveCamera(
-        autoFOV,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-    camera.position.z = autoZ;
-
-    // 📌 RENDERER RESPONSIVO
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000);
     document.getElementById('container').appendChild(renderer.domElement);
+
+    camera.position.z = 25;
+
+    /* --------------------------------------------------------
+       🔥 AJUSTE AUTOMÁTICO PARA CELULAR/TABLET
+       -------------------------------------------------------- */
+    if (window.innerWidth < 768) {
+        camera.position.z = 32;                // afasta para caber tudo
+        particlesScaleFactor = 0.85;           // reduz tamanho da esfera
+    } else {
+        particlesScaleFactor = 1;
+    }
+    /* -------------------------------------------------------- */
 
     createParticles();
     setupEventListeners();
@@ -44,9 +38,9 @@ function createParticles() {
         const theta = Math.sqrt(count * Math.PI) * phi;
 
         return {
-            x: 8 * Math.cos(theta) * Math.sin(phi),
-            y: 8 * Math.sin(theta) * Math.sin(phi),
-            z: 8 * Math.cos(phi)
+            x: 8 * Math.cos(theta) * Math.sin(phi) * particlesScaleFactor,
+            y: 8 * Math.sin(theta) * Math.sin(phi) * particlesScaleFactor,
+            z: 8 * Math.cos(phi) * particlesScaleFactor
         };
     }
 
@@ -202,9 +196,9 @@ function morphToSphere() {
         const theta = Math.sqrt(count * Math.PI) * phi;
 
         return {
-            x: 8 * Math.cos(theta) * Math.sin(phi),
-            y: 8 * Math.sin(theta) * Math.sin(phi),
-            z: 8 * Math.cos(phi)
+            x: 8 * Math.cos(theta) * Math.sin(phi) * particlesScaleFactor,
+            y: 8 * Math.sin(theta) * Math.sin(phi) * particlesScaleFactor,
+            z: 8 * Math.cos(phi) * particlesScaleFactor
         };
     }
 
@@ -239,14 +233,13 @@ function animate() {
 }
 
 window.addEventListener('resize', () => {
-
-    const small = window.innerWidth < 600;
-
     camera.aspect = window.innerWidth / window.innerHeight;
-    camera.position.z = small ? 32 : 25;
     camera.updateProjectionMatrix();
-
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    /* 🔥 AJUSTE AUTOMÁTICO NO RESIZE */
+    if (window.innerWidth < 768) camera.position.z = 32;
+    else camera.position.z = 25;
 });
 
 init();
